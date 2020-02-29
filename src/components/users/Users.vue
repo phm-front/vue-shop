@@ -33,25 +33,30 @@
             <el-switch v-model="scope.row.mg_state" @change="statuChange(scope.row)"></el-switch>
           </template>
         </el-table-column>
-        <el-table-column label="操作">
+        <el-table-column label="操作" width="300px">
           <template slot-scope="scope">
             <!-- 修改按钮 -->
             <el-button
               type="primary"
               icon="el-icon-edit"
-              size="small"
+              size="mini"
               @click="showUserMessage(scope.row)"
             ></el-button>
             <!-- 删除按钮 -->
             <el-button
               type="danger"
               icon="el-icon-delete"
-              size="small"
+              size="mini"
               @click="removeUserById(scope.row.id)"
             ></el-button>
             <!-- 分配用户按钮 -->
             <el-tooltip effect="dark" content="分配用户" placement="top" :enterable="false">
-              <el-button type="warning" icon="el-icon-setting" size="small"></el-button>
+              <el-button
+                type="warning"
+                icon="el-icon-setting"
+                size="mini"
+                @click="setRoleClick(scope.row)"
+              ></el-button>
             </el-tooltip>
           </template>
         </el-table-column>
@@ -108,6 +113,26 @@
       <span slot="footer" class="dialog-footer">
         <el-button @click="editDialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="editUserMessage">确 定</el-button>
+      </span>
+    </el-dialog>
+    <!-- 分配用户dialog -->
+    <el-dialog title="提示" :visible.sync="setRoleDialogVisible" width="50%" @close="setRolseClosed">
+      <p>当前的用户: {{userInfo.username}}</p>
+      <p>当前的角色: {{userInfo.role_name}}</p>
+      <div>
+        分配新的角色:
+        <el-select v-model="selectedRoleId" placeholder="请选择">
+          <el-option
+            v-for="item in roleList"
+            :key="item.id"
+            :label="item.roleName"
+            :value="item.id"
+          ></el-option>
+        </el-select>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="setRoleDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="selectedRole">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -192,7 +217,12 @@ export default {
             trigger: 'blur'
           }
         ]
-      }
+      },
+      setRoleDialogVisible: false,
+      //当前的用户信息
+      userInfo: '',
+      roleList: [],
+      selectedRoleId: ''
     }
   },
   methods: {
@@ -305,6 +335,32 @@ export default {
       }
       this.$message.success('删除成功！')
       this.getUsers()
+    },
+    //监听分配用户按钮点击
+    async setRoleClick(role) {
+      this.setRoleDialogVisible = true
+      this.userInfo = role
+      const { data: res } = await this.$http.get('roles')
+      if (res.meta.status !== 200) return this.$message.error('获取角色失败！')
+      this.roleList = res.data
+    },
+    //分配用户dialog点击确定
+    async selectedRole() {
+      const { data: res } = await this.$http.put(
+        `users/${this.userInfo.id}/role`,
+        {
+          rid: this.selectedRoleId
+        }
+      )
+      if (res.meta.status !== 200) {
+        return this.$message.error('分配角色失败！')
+      }
+      this.setRoleDialogVisible = false
+      this.getUsers()
+    },
+    //分配用户dialog关闭时重置
+    setRolseClosed() {
+      this.selectedRoleId = ''
     }
   },
   created() {
