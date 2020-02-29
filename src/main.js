@@ -9,6 +9,11 @@ import './assets/fonts/iconfont.css'
 //配置axios
 import axios from 'axios'
 axios.defaults.baseURL = 'http://127.0.0.1:8888/api/private/v1/'
+//拦截请求，需要授权的 API ，在请求头中使用Authorization字段添加 token 令牌
+axios.interceptors.request.use(config => {
+  config.headers.Authorization = window.sessionStorage.getItem('token')
+  return config
+})
 //将axios挂在到Vue的原型对象上,使每个实例对象都能访问从而发送请求
 Vue.prototype.$http = axios
 

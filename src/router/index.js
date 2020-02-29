@@ -3,6 +3,8 @@ import VueRouter from 'vue-router'
 // import Login from '../components/Login.vue'
 const Login = () => import('../components/Login.vue')
 const Home = () => import('../components/Home.vue')
+const Welcome = () => import('../components/Welcome.vue')
+const Users = () => import('../components/users/Users.vue')
 
 Vue.use(VueRouter)
 
@@ -17,7 +19,18 @@ const routes = [
   },
   {
     path: '/home',
-    component: Home
+    component: Home,
+    redirect: '/welcome',
+    children: [
+      {
+        path: '/welcome',
+        component: Welcome
+      },
+      {
+        path: '/users',
+        component: Users
+      }
+    ]
   }
 ]
 
@@ -30,7 +43,9 @@ router.beforeEach((to, from, next) => {
   //访问登录页面，直接放行
   if (to.path === '/login') return next()
   //获取token
-  const tokenStr = window.sessionStorage.setItem('token')
+  const tokenStr = window.sessionStorage.getItem('token')
+  // console.log(tokenStr);
+
   //没有token时，强制跳转到登录页
   if (!tokenStr) return next('/login')
   next()
